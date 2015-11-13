@@ -58,6 +58,7 @@ extern volatile float gyroW;
 
 extern bool lineSensorsFeedbackEnabled;
 extern volatile float lineSensorFeedback;
+extern volatile float lineSensorActuation;
 
 /********************************** LOCAL  VARIABLES **********************************/
 
@@ -123,15 +124,15 @@ void InitMotor(void)
 
 	DisWheelMotor();
 
-	SpeedPID[XSPEED].Kp = 0.8;
+	SpeedPID[XSPEED].Kp = 1.0;
 	SpeedPID[XSPEED].Kd = 12;
-	SpeedPID[XSPEED].Ki = 0;
+	SpeedPID[XSPEED].Ki = 0.0;
 
 	arm_pid_init_f32(&SpeedPID[XSPEED], true);
 
 
-	SpeedPID[WSPEED].Kp = 0.25;
-	SpeedPID[WSPEED].Kd = 18;
+	SpeedPID[WSPEED].Kp = 2.9;
+	SpeedPID[WSPEED].Kd = 14;
 	SpeedPID[WSPEED].Ki = 0.0;
 
 	arm_pid_init_f32(&SpeedPID[WSPEED], true);
@@ -185,11 +186,10 @@ void MotorPID(void)
 		oldEncoderData[i] = newEncoderData[i];
 	}
 
-
 	// XSPEED is the sum of left and right wheels speed
 	PIDFeedback[XSPEED] = (float)(encoderSpeed[0] + encoderSpeed[1]);
 
-#if USE_GYRO_FEEDBACK
+#if (USE_GYRO_FEEDBACK == true)
 
 	if(gyroFeedbakEnabled == true)
 	{
@@ -200,11 +200,8 @@ void MotorPID(void)
 		PIDFeedback[WSPEED] = ((float)(encoderSpeed[1] - encoderSpeed[0]));
 	}
 
-	if(lineSensorsFeedbackEnabled == true)
-	{
-		PIDFeedback[WSPEED] += lineSensorFeedback;
-	}
-#else
+
+#elif(USE_LINE_SENSOR_FEEDBACK == true)
 
 	// WSPEED is the difference between left and right wheel
 	// SInce antiClockwise is positive, we take right-left wheel speed
@@ -212,15 +209,19 @@ void MotorPID(void)
 
 	if(lineSensorsFeedbackEnabled == true)
 	{
-		PIDFeedback[WSPEED] += lineSensorFeedback*LINE_SENSOR_GAIN;
+		PIDFeedback[WSPEED] += lineSensorActuation;
 	}
 
+#else
+	// WSPEED is the difference between left and right wheel
+	// SInce antiClockwise is positive, we take right-left wheel speed
+	PIDFeedback[WSPEED] = (float)(encoderSpeed[1] - encoderSpeed[0]);
 #endif
 
 	// ---------------------------------------------------------------------------------
 	// PID position control
 	// ---------------------------------------------------------------------------------
-#if USE_GYRO_FEEDBACK
+#if (USE_GYRO_FEEDBACK == true)
 	for (i=0; i<NUM_OF_SPEED; i++)
 	{
 
@@ -259,7 +260,7 @@ void MotorPID(void)
 		//posPWM[i] = (kp[i]*posErr[i] + kd[i]*(posErr[i]-posErrOld[i]));
 
 		posPWM[i] = arm_pid_f32(&SpeedPID[i], posErr[i]);
-		posErrOld[i] = posErr[i];
+//		posErrOld[i] = posErr[i];
 	}
 #endif
 
@@ -298,10 +299,7 @@ void MotorPID(void)
 
 //FIXME: Critical
 //	EI;
-
-
 	bMotorISRFlag = true;
-
 }
 
 /*************************************** EOF ******************************************/

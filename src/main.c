@@ -15,17 +15,31 @@
 #include "dcmotorcontrol.h"
 #include "profile.h"
 
-#include "delay.h"
+#include "cmdline_parser.h"
 
+#include "delay.h"
 
 void vApplicationTickHook( void )
 {
 	HAL_IncTick();
 }
 
-int32_t dados[10] = {0xff};
+
+extern bool lineSensorsFeedbackEnabled;
+
 static void mainTask(void* pvParameters)
 {
+	//CMDLINE_CONTEXT cmd_context;
+
+	//cmd_context.out = printf;
+	//cmdline_init(&cmd_context);
+
+	static bool flag = false;
+	char c=0;
+	float vel = 0;
+
+	bool bluetooth = false;
+
 	(void)pvParameters;
 
 	ledsbsp_toogleOutputLed(LED1);
@@ -43,126 +57,68 @@ static void mainTask(void* pvParameters)
 
 	controller_Init();
 
-	EnWheelMotor();
-
-	float maxLinearSpeed = 800;
-	float endLinearSpeed = 0;
-	float maxAngularSpeed = 500;
-	float accX = 2200;
-	float accW = 8000;
-
-	MoveRobot(XSPEED, 5000, 0, maxLinearSpeed, 0, accX);
-
-#if 0
-	for(int i = 0; i < 8; i++)
+	if(bluetooth == false)
 	{
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, -90, 0, maxAngularSpeed, 0, accW);
+		EnWheelMotor();
+		vel = 900;
 	}
 
-	SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, endLinearSpeed, accX);
-	WaitDist(XSPEED, 150);
-	buzzerbsp_beep(ON);
-	vTaskDelay(10);
-	buzzerbsp_beep(OFF);
-	while(!EndOfMove(XSPEED));
-#endif
 
-#if 0
-	for(int i = 0; i < 4; i++)
-	{
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, -90, 0, maxAngularSpeed, 0, accW);
-
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, 90, 0, maxAngularSpeed, 0, accW);
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, -90, 0, maxAngularSpeed, 0, accW);
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, -90, 0, maxAngularSpeed, 0, accW);
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, -90, 0, maxAngularSpeed, 0, accW);
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, maxLinearSpeed, accX);
-		WaitDist(XSPEED, 150);
-		buzzerbsp_beep(ON);
-		vTaskDelay(10);
-		buzzerbsp_beep(OFF);
-		while(!EndOfMove(XSPEED));
-
-		MoveRobot(WSPEED, -90, 0, maxAngularSpeed, 0, accW);
-	}
-
-	SetMoveCommand(XSPEED, 180, 0, maxLinearSpeed, endLinearSpeed, accX);
-	WaitDist(XSPEED, 150);
-	buzzerbsp_beep(ON);
-	vTaskDelay(10);
-	buzzerbsp_beep(OFF);
-	while(!EndOfMove(XSPEED));
-#endif
+	lineSensorsFeedbackEnabled = true;
 
 
 
+	SetRobotAccX(800);
+	SetRobotSpeedX(vel);
+
+	//	DisWheelMotor();
 
 	for(;;)
 	{
-		ledsbsp_toogleOutputLed(LED1);
+		if(bluetooth == true)
+		{
+			if(usart1bsp_GetNBytes((uint8_t*)&c,1) > 0)
+			{
+				if(c == 'm')
+				{
+					if(flag == false)
+					{
+						EnWheelMotor();
+						SetRobotSpeedX(600);
+						flag = true;
 
-		vTaskDelay(300);
+					}
+					else
+					{
+						SetRobotSpeedX(0);
+						DisWheelMotor();
+						flag = false;
+
+					}
+				}
+				if(c == 'p')
+				{
+					vel += 50;
+					SetRobotSpeedX(vel);
+				}
+				if(c == 'n')
+				{
+					vel -= 50;
+					SetRobotSpeedX(vel);
+				}
+
+				ledsbsp_toogleOutputLed(LED1);
+			}
+			vTaskDelay(100);
+		}
+		else
+		{
+
+			vTaskDelay(100);
+			ledsbsp_toogleOutputLed(LED1);
+		}
+		vTaskDelay(100);
+					ledsbsp_toogleOutputLed(LED1);
 	}
 }
 // ----- main() ---------------------------------------------------------------
@@ -180,11 +136,10 @@ int main(void)
 	ledsbsp_init();
 	buzzerbsp_init();
 
-//	motorsbsp_init();
-//	encodersbsp_init();
+	//	motorsbsp_init();
+	//	encodersbsp_init();
 
-
-	xTaskCreate(mainTask, "mt", (configMINIMAL_STACK_SIZE*3), NULL, tskIDLE_PRIORITY, NULL);
+	xTaskCreate(mainTask, "mt", (configMINIMAL_STACK_SIZE*5), NULL, tskIDLE_PRIORITY, NULL);
 
 	vTaskStartScheduler();
 

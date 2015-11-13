@@ -74,6 +74,7 @@ extern "C"
 #define PAREDE_FRONTAL  0b010
 #define PAREDE_DIREITA  0b001
 
+
 #define LINE_SENSOR_RESOLUTION_HIGH
 
 /************************* TYPEDEFS, CLASSES AND STRUCTURES ***************************/

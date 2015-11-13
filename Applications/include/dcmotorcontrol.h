@@ -41,7 +41,9 @@ extern "C"
 #define LEFTMOTORENCODER	TIM2->CNT
 #define RIGHTMOTORPENCODER  TIM5->CNT
 
-#define USE_GYRO_FEEDBACK	true
+#define USE_GYRO_FEEDBACK	false
+#define USE_LINE_SENSOR_FEEDBACK true
+
 /********************************** GLOBAL VARIABLES **********************************/
 
 /********************************** GLOBAL FUNCTIONS **********************************/

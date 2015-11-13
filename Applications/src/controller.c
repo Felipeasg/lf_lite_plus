@@ -34,6 +34,8 @@
 #include "dcmotorcontrol.h"
 #include "profile.h"
 
+#include "arm_math.h"
+
 #include <stdbool.h>
 #include <math.h>
 #include <stdlib.h>
@@ -41,7 +43,7 @@
 
 /******************************* DEFINITIONS AND MACROS *******************************/
 
-#define LINE_SENSOR_GAIN	0.08F
+#define LINE_SENSOR_GAIN	4.7F
 
 /************************* TYPEDEFS, CLASSES AND STRUCTURES ***************************/
 
@@ -73,6 +75,10 @@ uint8_t data[804];
 volatile float lineSensorFeedback = 0;
 volatile float oldLineSensorFeedback = 0;
 
+arm_pid_instance_f32 linePID;
+
+volatile float lineSensorActuation;
+
 /******************************* FUNCTION  IMPLEMENTATION *****************************/
 
 void controller_Init(void)
@@ -87,6 +93,11 @@ void controller_Init(void)
 	//Motor control init will init encoder and motorbsp drivers to hardware
 
 
+	linePID.Kp = 1.1;
+	linePID.Kd = 0.08;
+	linePID.Ki = 0.0;
+
+	arm_pid_init_f32(&linePID, true);
 
 	InitMotor();
 
@@ -102,14 +113,12 @@ static void ControlTask(void* pvParameters)
 {
 	(void)pvParameters;
 
-
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
 	//vTaskDelay(1000);
 
 	for(;;)
 	{
-
 		readLineSensor();
 
 		DoSpeedProfile();
@@ -117,18 +126,18 @@ static void ControlTask(void* pvParameters)
 		MotorPID();
 
 
-		samples[idx] = lineSensorFeedback;
-		samples[idx+1] = 0;
-
-		idx += 2;
-		if(idx == 200)
-		{
-			memcpy(data, header, 4);
-			memcpy(&data[4], samples, 800);
-			uart1bsp_sendData(data, 804);
-
-			idx = 0;
-		}
+//		samples[idx] = lineSensorFeedback;
+//		samples[idx+1] = 0;
+//
+//		idx += 2;
+//		if(idx == 200)
+//		{
+//			memcpy(data, header, 4);
+//			memcpy(&data[4], samples, 800);
+//			uart1bsp_sendData(data, 804);
+//
+//			idx = 0;
+//		}
 
 
 		vTaskDelayUntil(&xLastWakeTime, 1);
@@ -142,9 +151,27 @@ static void readLineSensor(void)
 
 	if(lineError < INFINITO)
 	{
-		lineSensorFeedback = lineError * LINE_SENSOR_GAIN;
+		if(lineError >= 0)
+		{
+			lineSensorFeedback = (lineError) * LINE_SENSOR_GAIN;
 
-		oldLineSensorFeedback = lineSensorFeedback;
+#if 1
+			lineSensorActuation = arm_pid_f32(&linePID, lineSensorFeedback);
+#else
+			lineSensorActuation = lineSensorFeedback;
+#endif
+			oldLineSensorFeedback = lineSensorFeedback;
+		}
+		else
+		{
+			lineSensorFeedback = (lineError) * LINE_SENSOR_GAIN;
+#if 1
+			lineSensorActuation = arm_pid_f32(&linePID, lineSensorFeedback);
+#else
+			lineSensorActuation = lineSensorFeedback;
+#endif
+			oldLineSensorFeedback = lineSensorFeedback;
+		}
 	}
 	else
 	{

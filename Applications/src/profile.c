@@ -68,7 +68,7 @@ volatile int uncertainty;
 
 bool gyroFeedbakEnabled = false;
 
-bool lineSensorsFeedbackEnabled = true;
+bool lineSensorsFeedbackEnabled = false;
 
 
 /******************************* FUNCTION  IMPLEMENTATION *****************************/

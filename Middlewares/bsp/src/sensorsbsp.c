@@ -822,42 +822,42 @@ int32_t sensorsbsp_getLineSensors(void)
 		// extremidades pussuem peso maior, no final é realizada a média ponderada
 		if(HAL_GPIO_ReadPin(LINE1_PORT, LINE1_PIN) == LINHA)
 		{
-			soma += -2000;
+			soma += -22;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE2_PORT, LINE2_PIN) == LINHA)
 		{
-			soma += -1333;
+			soma += -12;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE3_PORT, LINE3_PIN) == LINHA)
 		{
-			soma += -667;
+			soma += -6;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE4_PORT, LINE4_PIN) == LINHA)
 		{
-			soma += -167;
+			soma += -3;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE5_PORT, LINE5_PIN) == LINHA)
 		{
-			soma += 167;
+			soma += 3;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE6_PORT, LINE6_PIN) == LINHA)
 		{
-			soma += 667;
+			soma += 6;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE7_PORT, LINE7_PIN) == LINHA)
 		{
-			soma += 1333;
+			soma += 12;
 			n++;
 		}
 		if(HAL_GPIO_ReadPin(LINE8_PORT, LINE8_PIN) == LINHA)
 		{
-			soma += 2000;
+			soma += 22;
 			n++;
 		}
 
@@ -866,8 +866,6 @@ int32_t sensorsbsp_getLineSensors(void)
 		HAL_GPIO_WritePin(R_LINE_PORT, R_LINE_PIN, LOW);
 
 		elapse_us(i * 2, t0);
-
-
 	}
 
 

@@ -32,10 +32,13 @@ extern "C"
 
 /******************************* DEFINITIONS AND MACROS *******************************/
 
-#define BAUD_RATE	115200
+#define BAUD_RATE		115200
 #define USART_TIMEOUT	100
 
 #define STDIO_UART
+
+
+
 /************************* TYPEDEFS, CLASSES AND STRUCTURES ***************************/
 
 /********************************** GLOBAL VARIABLES **********************************/
@@ -54,7 +57,7 @@ void uart1bsp_init(void);
 uint8_t uart1bsp_getByte(void);
 void uart1bsp_sendData(void* data, uint32_t size);
 
-
+uint32_t usart1bsp_GetNBytes(uint8_t *buff, uint32_t u32_size);
 
 #ifdef __cplusplus
 }
